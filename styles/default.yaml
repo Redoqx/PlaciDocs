@@ -1,0 +1,25 @@
+# PlaciDocs — style bawaan (dipakai bila dokumen tidak memilih style).
+# Semua kunci bersifat opsional; nilai yang tidak ditulis memakai default engine.
+name: Default PlaciDocs
+language: indonesian
+
+page:
+  size: A4
+  margin: { top: 3cm, bottom: 3cm, left: 3cm, right: 3cm }
+
+font:
+  family: Times New Roman   # otomatis diganti TeX Gyre Termes bila tidak terpasang
+  size: 12pt
+
+paragraph:
+  line_spacing: 1.5
+  indent: 1.25cm
+  align: justify
+
+headings:
+  h1: { label: "Bab {num}", label_position: above, align: center, size: 16pt, new_page: true }
+  h2: { size: 14pt }
+  h3: { size: 12pt }
+
+# Isi pokok bernomor arab; judul bertag {pembuka} bernomor romawi (tag bawaan).
+page_numbering: { style: arabic, position: bottom-center }

@@ -1,0 +1,3 @@
+extends: skripsi-umum
+font: { family: TeX Gyre Schola, size: 12pt }
+bibliography: { style: plain, citation: numeric }

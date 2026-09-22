@@ -1,0 +1,35 @@
+# Laporan kantor: contoh style turunan (extends) yang hanya menulis perbedaannya.
+extends: default
+name: Laporan Kantor
+
+page:
+  margin: { top: 2.5cm, bottom: 2.5cm, left: 3cm, right: 2.5cm }
+
+font:
+  family: Arial            # fallback: TeX Gyre Heros
+  size: 11pt
+
+paragraph:
+  line_spacing: 1.15
+  indent: 0pt
+  space_after: 6pt
+
+headings:
+  all: { size: 11pt }
+  h1: { label: "{num}", label_position: inline, align: left, size: 14pt, new_page: false, space_before: 18pt, space_after: 8pt }
+  h2: { size: 12pt }
+
+page_numbering: { style: arabic, position: bottom-right }
+
+table:
+  borders: booktabs
+  header_background: "gray!15"
+  width: full
+
+lists:
+  gambar: { numbering: "{n}" }
+  tabel:  { numbering: "{n}" }
+
+rules:
+  - when: { element: table, columns: { gte: 8 } }
+    set:  { page.orientation: landscape }

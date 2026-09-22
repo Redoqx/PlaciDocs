@@ -1,0 +1,4 @@
+# Coverage variant: Bookman fallback and the remaining common .bst files.
+extends: laporan-kantor
+font: { family: TeX Gyre Bonum, sans: TeX Gyre Heros, size: 10pt }
+bibliography: { style: abbrvnat }

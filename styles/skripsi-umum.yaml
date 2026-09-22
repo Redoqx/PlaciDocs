@@ -1,0 +1,129 @@
+# Pedoman penulisan skripsi (format umum perguruan tinggi di Indonesia).
+# Salin file ini lalu sesuaikan dengan pedoman kampus Anda.
+name: Skripsi (Umum)
+language: indonesian
+
+page:
+  size: A4
+  margin: { top: 4cm, left: 4cm, bottom: 3cm, right: 3cm }
+
+font:
+  family: Times New Roman
+  size: 12pt
+
+paragraph:
+  line_spacing: 1.5
+  indent: 1.25cm          # menjorok 1,25 cm di awal paragraf
+  indent_first: true      # paragraf pertama setelah judul juga menjorok
+  space_after: 0pt
+  align: justify
+
+headings:
+  all: { bold: true, size: 12pt, space_before: 12pt, space_after: 6pt }
+  h1:
+    numbering: "{Roman}"          # BAB I, BAB II, ...
+    label: "BAB {num}"
+    label_position: above         # "BAB I" di baris sendiri, judul di bawahnya
+    align: center
+    size: 14pt
+    uppercase: true
+    new_page: true
+    space_before: 0pt
+    space_after: 24pt
+  h2: { numbering: "{h1}.{n}" }                   # 1.1
+  h3: { numbering: "{h1}.{h2}.{n}" }              # 1.1.1
+  h4: { numbering: "{h1}.{h2}.{h3}.{n}", italic: true }
+  h5: { numbered: false, italic: true }
+
+contents:
+  depth: 3
+
+# Nomor halaman isi pokok. Bagian pembuka/penutup diatur lewat tag di bawah.
+page_numbering: { style: arabic, position: top-right, first_page: bottom-center }
+
+figure:
+  width: 80%
+  placement: H
+  caption: { position: below, align: center, separator: " " }
+
+table:
+  placement: H
+  font_size: 11pt
+  line_spacing: 1
+  borders: grid
+  header_bold: true
+  caption: { position: above, align: center, separator: " " }
+
+# Daftar yang bisa dimuat dengan judul bertag, misalnya "# DAFTAR GAMBAR {daftar gambar}".
+# Item masuk ke daftarnya lewat awalan label: {#fig:x}, {#tbl:x}, {#eq:x}.
+lists:
+  gambar: { title: DAFTAR GAMBAR, prefix: Gambar, label: fig, numbering: "{h1}.{n}", kind: figure }
+  tabel:  { title: DAFTAR TABEL,  prefix: Tabel,  label: tbl, numbering: "{h1}.{n}", kind: table }
+  rumus:  { title: DAFTAR RUMUS,  prefix: Rumus,  label: eq,  numbering: "({h1}.{n})", kind: equation }
+
+# Tag yang ditulis di akhir judul: "# KATA PENGANTAR {pembuka}".
+tags:
+  pembuka:
+    aliases: [front]
+    numbered: false
+    page_numbering: { style: roman, position: bottom-center }
+  penutup:
+    aliases: [back]
+    numbered: false
+  lampiran:
+    aliases: [appendix]
+    label: "LAMPIRAN {num}"
+    numbering: "{Alpha}"
+  pengesahan:
+    aliases: [approval]
+    numbered: false
+    page_numbering: { style: roman, position: bottom-center }
+    template: |
+      \begin{center}
+      \vspace*{1cm}
+      {\bfseries {{title}}\par}
+      \vspace{1cm}
+      Oleh: {{author}} ({{id}})\par
+      \vspace{2cm}
+      Disetujui oleh:\par
+      \vspace{2.5cm}
+      \underline{\hspace{6cm}}\par
+      {{advisor}}\par
+      Pembimbing\par
+      \end{center}
+  IEEEStyle:
+    bibliography: { style: ieeetr, citation: numeric }
+
+# Section format: "::: Landscape" ... "::: Landscape".
+sections:
+  Landscape: { aliases: [JadiLandscape, Lanskap], orientation: landscape }
+  DuaKolom:  { aliases: [TwoColumns], columns: 2 }
+
+bibliography:
+  style: apalike
+  citation: author-year
+  title: DAFTAR PUSTAKA
+
+# Halaman sampul. {{kunci}} diisi dari front matter dokumen.
+cover: |
+  \centering
+  {\fontsize{14pt}{18pt}\selectfont\bfseries {{title}}\par}
+  \vspace{1.5cm}
+  {\bfseries SKRIPSI\par}
+  \vspace{0.5cm}
+  Diajukan sebagai salah satu syarat untuk memperoleh gelar {{degree}}\par
+  \vfill
+  Oleh:\par
+  {\bfseries {{author}}\par}
+  {{id}}\par
+  \vfill
+  {\bfseries {{department}}\par {{faculty}}\par {{institution}}\par {{year}}\par}
+
+# Aturan bersyarat: dievaluasi untuk setiap elemen dokumen, berurutan.
+rules:
+  - when: { element: table, columns: { gt: 6 } }     # tabel lebar -> halaman landscape
+    set:  { page.orientation: landscape }
+  - when: { element: table, rows: { gt: 25 } }       # tabel panjang -> boleh terpotong antarhalaman
+    set:  { table.longtable: true, table.font_size: 10pt }
+  - when: { element: table, in: lampiran }           # tabel lampiran lebih kecil
+    set:  { table.font_size: 10pt }

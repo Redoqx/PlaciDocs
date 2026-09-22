@@ -1,0 +1,6 @@
+/build*/
+.placi/
+*.pdf
+third_party/tectonic/tectonic
+third_party/tectonic/tectonic.exe
+tests/texcache/coverage.pdf

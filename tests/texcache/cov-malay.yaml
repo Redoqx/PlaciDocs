@@ -1,0 +1,5 @@
+# Coverage variant: Malay, 13pt (scrextend), Palatino fallback, unsrtnat.
+extends: default
+language: malay
+font: { family: TeX Gyre Pagella, size: 13pt }
+bibliography: { style: unsrtnat, citation: numeric }

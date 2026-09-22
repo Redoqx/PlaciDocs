@@ -1,0 +1,6 @@
+# Coverage variant: English, sans font fallback, 11pt, numeric natbib.
+extends: skripsi-umum
+language: english
+font: { family: TeX Gyre Heros, mono: TeX Gyre Cursor, size: 11pt }
+bibliography: { style: plainnat, citation: numeric }
+table: { borders: booktabs, header_background: "gray!15" }
