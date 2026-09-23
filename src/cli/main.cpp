@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
             auto r = build_pdf(bo, diags);
             int errors = report(diags);
             if (!r.compile.ok) {
-                std::cerr << "LaTeX failed (" << path_str(r.tex) << "):\n";
-                for (auto& e : r.compile.errors) std::cerr << "  " << e << "\n";
+                // The errors were already reported above, on the Markdown lines that caused them.
+                std::cerr << "LaTeX failed; generated source: " << path_str(r.tex) << "\n";
                 if (verbose) std::cerr << r.compile.output << "\n";
                 return 1;
             }

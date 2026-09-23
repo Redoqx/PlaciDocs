@@ -173,8 +173,16 @@ BuildResult build_pdf(const BuildOptions& opts, Diagnostics& diags) {
         r.compile = run_tectonic(*tectonic, to);
     }
     if (!r.compile.ok) {
-        for (auto& e : r.compile.errors)
-            diags.push_back(latex_error_diagnostic(e, gen.line_map, path_str(opts.input), path_str(r.tex.stem())));
+        bool located = false;
+        for (auto& e : r.compile.errors) {
+            // Once a real error is pinned to a line, the engine's follow-up noise adds nothing.
+            if (located && (e.find("something bad happened inside") != std::string::npos ||
+                            e.find("unrecoverable error") != std::string::npos))
+                continue;
+            auto d = latex_error_diagnostic(e, gen.line_map, path_str(opts.input), path_str(r.tex.stem()));
+            located |= d.line > 0;
+            diags.push_back(std::move(d));
+        }
         return r;
     }
 
