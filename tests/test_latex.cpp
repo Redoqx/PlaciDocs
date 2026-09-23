@@ -200,3 +200,39 @@ TEST_CASE("template tags and page breaks") {
     CHECK(has(tex, "Budi\\par"));
     CHECK(has(tex, "A\n\n\\clearpage\n\nB"));
 }
+
+TEST_CASE("LaTeX lines map back to the Markdown lines that produced them") {
+    Diagnostics d;
+    auto st = skripsi();
+    // Lines:      1   2          3    4  5       6  7                8  9        10        11   12 13
+    const char* md = R"MD(---
+title: Uji
+---
+
+# Bab {#sec:a}
+
+Paragraf satu.
+
+```latex
+\perintah
+```
+
+Paragraf akhir.
+)MD";
+    auto doc = parse_document(md, d, "t.md", ParseOptions::from_style(st));
+    latex::LineMap map;
+    auto tex = latex::emit_document(doc, st, {}, d, &map);
+    REQUIRE(!map.empty());
+
+    size_t raw_line = 0, last_line = 0, line = 1;
+    for (size_t i = 0; i < tex.size(); ++i) {
+        if (tex[i] == '\n') ++line;
+        if (!raw_line && tex.compare(i, 9, "\\perintah") == 0) raw_line = line;
+        if (tex.compare(i, 14, "Paragraf akhir") == 0) last_line = line;
+    }
+    REQUIRE(raw_line > 0);
+    REQUIRE(last_line > 0);
+    CHECK(latex::markdown_line_for(map, raw_line) == 10);   // the \perintah line
+    CHECK(latex::markdown_line_for(map, last_line) == 13);  // the closing paragraph
+    CHECK(latex::markdown_line_for(map, 1) == 0);           // still inside the preamble
+}

@@ -12,6 +12,9 @@ endif()
 
 option(PLACI_BUILD_TESTS "Build unit tests" ON)
 include(GNUInstallDirs)
+if(PLACI_BUILD_TESTS)
+  enable_testing()
+endif()
 
 # ---------------------------------------------------------------- third party
 add_library(md4c STATIC third_party/md4c/md4c.c)
@@ -109,6 +112,20 @@ if(PLACI_BUILD_GUI AND Qt6_FOUND)
       VERBATIM)
   endif()
   install(TARGETS placidocs RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  if(PLACI_BUILD_TESTS)
+    # The document edits the GUI performs are plain string logic: test them here.
+    qt_add_executable(placi_gui_tests tests/main.cpp tests/test_gui_text.cpp tests/test_gui_dialogs.cpp
+                      src/gui/DocumentText.cpp src/gui/Bibliography.cpp src/gui/Dialogs.cpp)
+    target_link_libraries(placi_gui_tests PRIVATE Qt6::Widgets doctest)
+    target_include_directories(placi_gui_tests PRIVATE src)
+    # The tests run headless, so they need Qt's own plugin folder (the deployed
+    # one next to the app carries only the Windows platform plugin).
+    get_target_property(_qt_core_loc Qt6::Core LOCATION)
+    get_filename_component(_qt_bin "${_qt_core_loc}" DIRECTORY)
+    target_compile_definitions(placi_gui_tests PRIVATE PLACI_QT_PLUGINS="${_qt_bin}/../plugins")
+    add_test(NAME placi_gui_tests COMMAND placi_gui_tests)
+  endif()
 elseif(PLACI_BUILD_GUI)
   message(STATUS "Qt 6 (Widgets, PdfWidgets) not found: the desktop app is not built")
 endif()
@@ -142,15 +159,38 @@ add_custom_target(texcache
   COMMENT "Downloading the LaTeX packages PlaciDocs uses into texcache/"
   VERBATIM)
 
-# ---------------------------------------------------------------- install
+# ---------------------------------------------------------------- install & package
+# Everything an end user needs lands in one folder: both apps, the LaTeX engine,
+# its package cache, the built-in styles and (for the GUI) the Qt runtime.
 install(TARGETS placi_cli RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(PROGRAMS ${PLACI_TECTONIC} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY styles DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY ${CMAKE_BINARY_DIR}/texcache DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+install(FILES README.md LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
+install(DIRECTORY examples DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
+if(WIN32 AND TARGET placidocs)
+  # windeployqt already placed the Qt runtime next to the executable.
+  install(CODE "
+    file(GLOB _placi_dlls \"${CMAKE_BINARY_DIR}/*.dll\")
+    if(_placi_dlls)
+      file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\" TYPE SHARED_LIBRARY FILES \${_placi_dlls})
+    endif()")
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/qtplugins DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+  install(FILES ${CMAKE_BINARY_DIR}/qt.conf DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+endif()
+
+set(CPACK_PACKAGE_NAME PlaciDocs)
+set(CPACK_PACKAGE_VENDOR PlaciDocs)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tulis Markdown, dapatkan PDF sesuai aturan penulisan instansi")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY PlaciDocs)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE)
+set(CPACK_PACKAGE_EXECUTABLES placidocs "PlaciDocs")
+set(CPACK_GENERATOR ZIP)
+include(CPack)
 
 # ---------------------------------------------------------------- tests
 if(PLACI_BUILD_TESTS)
-  enable_testing()
   add_executable(placi_tests
     tests/main.cpp
     tests/test_parser.cpp

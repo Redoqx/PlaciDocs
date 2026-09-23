@@ -6,6 +6,7 @@
 
 #include "core/ast.hpp"
 #include "core/compile/tectonic.hpp"
+#include "core/latex/emitter.hpp"
 #include "core/passes/passes.hpp"
 #include "core/style/style.hpp"
 #include "core/util.hpp"
@@ -27,6 +28,7 @@ struct TexOutput {
     Document doc;
     Style style;
     std::string tex;
+    latex::LineMap line_map;  // .tex line -> Markdown line, for LaTeX errors
 };
 
 // Produces the LaTeX source of `input`. When `source` is given it is used

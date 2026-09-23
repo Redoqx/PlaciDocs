@@ -1,5 +1,6 @@
 #include "core/pipeline.hpp"
 
+#include <cctype>
 #include <fstream>
 #include <functional>
 
@@ -70,6 +71,25 @@ void check_images(Node& n, const fs::path& doc_dir, Diagnostics& diags, const st
     for (auto& c : n.children) check_images(c, doc_dir, diags, file);
 }
 
+// "main.tex:109: LaTeX Error: ..." -> a diagnostic on the Markdown line that
+// produced that .tex line.
+Diagnostic latex_error_diagnostic(const std::string& message, const latex::LineMap& map, const std::string& md_file,
+                                  const std::string& tex_stem) {
+    const std::string prefix = tex_stem + ".tex:";
+    size_t at = message.find(prefix);
+    if (at != std::string::npos) {
+        size_t start = at + prefix.size(), end = start;
+        while (end < message.size() && std::isdigit(static_cast<unsigned char>(message[end]))) ++end;
+        if (end > start && end < message.size() && message[end] == ':') {
+            size_t tex_line = std::stoul(message.substr(start, end - start));
+            std::string rest = std::string(trim(std::string_view(message).substr(end + 1)));
+            if (size_t md_line = latex::markdown_line_for(map, tex_line); md_line)
+                return {Diagnostic::Level::Error, "LaTeX: " + rest, md_file, md_line};
+        }
+    }
+    return {Diagnostic::Level::Error, "LaTeX: " + message, md_file, 0};
+}
+
 bool missing_from_cache(const std::string& output) {
     for (const char* needle : {"only-cached", "Cannot proceed without .vf", "not available in the local cache",
                                "not found", "unable to find"})
@@ -110,7 +130,7 @@ TexOutput generate_tex(const fs::path& input, const std::optional<std::string>& 
             eo.bibliography = path_str(bib);
         }
     }
-    out.tex = latex::emit_document(out.doc, out.style, eo, diags);
+    out.tex = latex::emit_document(out.doc, out.style, eo, diags, &out.line_map);
     return out;
 }
 
@@ -152,7 +172,11 @@ BuildResult build_pdf(const BuildOptions& opts, Diagnostics& diags) {
         fs::remove(probe, ec);
         r.compile = run_tectonic(*tectonic, to);
     }
-    if (!r.compile.ok) return r;
+    if (!r.compile.ok) {
+        for (auto& e : r.compile.errors)
+            diags.push_back(latex_error_diagnostic(e, gen.line_map, path_str(opts.input), path_str(r.tex.stem())));
+        return r;
+    }
 
     r.pdf = opts.output.value_or(doc_dir / opts.input.stem().concat(".pdf"));
     if (fs::absolute(r.pdf) != fs::absolute(r.compile.pdf)) {

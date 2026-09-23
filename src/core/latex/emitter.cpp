@@ -65,6 +65,16 @@ public:
     DocumentFacts facts;
     std::set<std::string> ids;       // every {#id} in the document
     bool bib_emitted = false;
+    LineMap line_map;                // .tex line -> Markdown line
+
+    // Records that whatever is emitted next comes from `md_line`.
+    void note_source_line(size_t md_line) {
+        if (!md_line) return;
+        for (size_t i = counted_; i < out.size(); ++i)
+            if (out[i] == '\n') ++tex_line_;
+        counted_ = out.size();
+        if (line_map.empty() || line_map.back().second != md_line) line_map.emplace_back(tex_line_, md_line);
+    }
 
     void collect_ids(const Node& n) {
         // A CrossRef's "id" is its target, not a label it defines.
@@ -122,6 +132,7 @@ public:
     }
 
     void block(const Node& n) {
+        note_source_line(n.line);
         if (n.prop("page.break_before") == "true") out += "\\clearpage\n";
         switch (n.type) {
             case NodeType::Heading: heading(n); break;
@@ -598,6 +609,8 @@ private:
     int multicol_ = 0;
     int multicol_cols_ = 1;
     int renumbered_ = 0;
+    size_t tex_line_ = 1;   // line the emitter is currently on, within the body
+    size_t counted_ = 0;    // how much of `out` has been scanned for newlines
     size_t current_page_style_ = static_cast<size_t>(-1);
     std::vector<Scope> scopes_;
     std::array<std::string, 6> active_setup_;
@@ -621,7 +634,17 @@ std::string emit_blocks(const Node& root, const Style& style, Diagnostics& diags
     return e.out;
 }
 
-std::string emit_document(const Document& doc, const Style& style, const EmitOptions& opts, Diagnostics& diags) {
+size_t markdown_line_for(const LineMap& map, size_t tex_line) {
+    size_t md = 0;
+    for (auto& [tex, markdown] : map) {
+        if (tex > tex_line) break;
+        md = markdown;
+    }
+    return md;
+}
+
+std::string emit_document(const Document& doc, const Style& style, const EmitOptions& opts, Diagnostics& diags,
+                          LineMap* line_map) {
     Emitter e(style, diags);
     e.doc = &doc;
     e.opts = &opts;
@@ -641,6 +664,12 @@ std::string emit_document(const Document& doc, const Style& style, const EmitOpt
     tex += "\n\\begin{document}\n";
     tex += build_document_start(style);
     tex += "\n";
+    if (line_map) {
+        // The body follows the preamble, so every recorded line shifts down by it.
+        size_t offset = 0;
+        for (char c : tex) offset += c == '\n';
+        for (auto& [tex_line, md_line] : e.line_map) line_map->emplace_back(tex_line + offset, md_line);
+    }
     tex += body;
     tex += "\\end{document}\n";
     return tex;

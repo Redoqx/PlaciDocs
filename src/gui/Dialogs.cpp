@@ -28,9 +28,11 @@ QDialogButtonBox* okCancel(QDialog* d) {
     return b;
 }
 
+// `kinds` is in priority order, so the list that suits this dialog comes first.
 void fillLists(QComboBox* box, const QList<ListChoice>& lists, const QStringList& kinds) {
-    for (auto& l : lists)
-        if (kinds.contains(l.kind)) box->addItem(l.prefix + QStringLiteral("  (") + l.key + ')', l.label);
+    for (const auto& kind : kinds)
+        for (auto& l : lists)
+            if (l.kind == kind) box->addItem(l.prefix + QStringLiteral("  (") + l.key + ')', l.label);
 }
 
 // "{#fig:x width=70%}" with the active delimiters; empty when there is nothing to say.
@@ -51,20 +53,25 @@ InsertImageDialog::InsertImageDialog(const QString& docDir, const QList<ListChoi
     setWindowTitle(tr("Sisipkan Gambar"));
     auto* form = new QFormLayout;
     file_ = new QLineEdit;
+    file_->setObjectName(QStringLiteral("file"));
     auto* browse = new QPushButton(tr("Pilih…"));
     auto* fileRow = new QHBoxLayout;
     fileRow->addWidget(file_);
     fileRow->addWidget(browse);
     form->addRow(tr("Berkas"), fileRow);
     caption_ = new QLineEdit;
+    caption_->setObjectName(QStringLiteral("caption"));
     form->addRow(tr("Keterangan (caption)"), caption_);
     list_ = new QComboBox;
+    list_->setObjectName(QStringLiteral("list"));
     fillLists(list_, lists, {QStringLiteral("figure"), QStringLiteral("float")});
     form->addRow(tr("Masuk daftar"), list_);
     label_ = new QLineEdit;
+    label_->setObjectName(QStringLiteral("label"));
     label_->setPlaceholderText(tr("otomatis dari nama berkas"));
     form->addRow(tr("Label"), label_);
     width_ = new QSpinBox;
+    width_->setObjectName(QStringLiteral("width"));
     width_->setRange(10, 100);
     width_->setValue(80);
     width_->setSuffix(QStringLiteral(" %"));
@@ -113,19 +120,24 @@ InsertTableDialog::InsertTableDialog(const QList<ListChoice>& lists, const TagDe
     setWindowTitle(tr("Sisipkan Tabel"));
     auto* form = new QFormLayout;
     rows_ = new QSpinBox;
+    rows_->setObjectName(QStringLiteral("rows"));
     rows_->setRange(1, 200);
     rows_->setValue(3);
     cols_ = new QSpinBox;
+    cols_->setObjectName(QStringLiteral("cols"));
     cols_->setRange(1, 20);
     cols_->setValue(3);
     form->addRow(tr("Baris isi"), rows_);
     form->addRow(tr("Kolom"), cols_);
     caption_ = new QLineEdit;
+    caption_->setObjectName(QStringLiteral("caption"));
     form->addRow(tr("Keterangan (caption)"), caption_);
     list_ = new QComboBox;
+    list_->setObjectName(QStringLiteral("list"));
     fillLists(list_, lists, {QStringLiteral("table"), QStringLiteral("float")});
     form->addRow(tr("Masuk daftar"), list_);
     label_ = new QLineEdit;
+    label_->setObjectName(QStringLiteral("label"));
     label_->setPlaceholderText(tr("otomatis dari keterangan"));
     form->addRow(tr("Label"), label_);
     auto* v = new QVBoxLayout(this);
@@ -160,15 +172,20 @@ QString InsertTableDialog::markdown() const {
 InsertMathDialog::InsertMathDialog(const TagDelimiters& d, QWidget* parent) : QDialog(parent), delims_(d) {
     setWindowTitle(tr("Sisipkan Rumus (LaTeX)"));
     latex_ = new QPlainTextEdit;
+    latex_->setObjectName(QStringLiteral("latex"));
     latex_->setPlaceholderText(QStringLiteral("E = mc^2\n\n% Beberapa baris: pisahkan dengan \\\\ dan ratakan dengan &"));
     QFont mono(QStringLiteral("Consolas"));
     latex_->setFont(mono);
     inline_ = new QCheckBox(tr("Di dalam kalimat ($...$)"));
+    inline_->setObjectName(QStringLiteral("inline"));
     numbered_ = new QCheckBox(tr("Bernomor"));
+    numbered_->setObjectName(QStringLiteral("numbered"));
     numbered_->setChecked(true);
     label_ = new QLineEdit;
+    label_->setObjectName(QStringLiteral("label"));
     label_->setPlaceholderText(QStringLiteral("eq:nama"));
     caption_ = new QLineEdit;
+    caption_->setObjectName(QStringLiteral("caption"));
     caption_->setPlaceholderText(tr("isi agar muncul di Daftar Rumus"));
     auto* form = new QFormLayout;
     form->addRow(inline_);
@@ -210,12 +227,16 @@ CitationDialog::CitationDialog(const QString& bibPath, QWidget* parent) : QDialo
     setWindowTitle(tr("Sisipkan Sitasi"));
     entries_ = readBibFile(bibPath);
     search_ = new QLineEdit;
+    search_->setObjectName(QStringLiteral("search"));
     search_->setPlaceholderText(tr("Cari penulis, judul, tahun, atau kunci…"));
     list_ = new QListWidget;
+    list_->setObjectName(QStringLiteral("entries"));
     list_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     locator_ = new QLineEdit;
+    locator_->setObjectName(QStringLiteral("locator"));
     locator_->setPlaceholderText(tr("mis. hlm. 12"));
     mode_ = new QComboBox;
+    mode_->setObjectName(QStringLiteral("mode"));
     mode_->addItem(tr("Dalam kurung — (Doe, 2020)"), QStringLiteral("paren"));
     mode_->addItem(tr("Naratif — Doe (2020)"), QStringLiteral("text"));
     mode_->addItem(tr("Tahun saja — (2020)"), QStringLiteral("year"));
@@ -306,12 +327,18 @@ AddListDialog::AddListDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle(tr("Tambah Daftar"));
     auto* form = new QFormLayout;
     name_ = new QLineEdit;
+    name_->setObjectName(QStringLiteral("name"));
     name_->setPlaceholderText(tr("mis. grafik"));
     title_ = new QLineEdit;
+    title_->setObjectName(QStringLiteral("title"));
     prefix_ = new QLineEdit;
+    prefix_->setObjectName(QStringLiteral("prefix"));
     label_ = new QLineEdit;
+    label_->setObjectName(QStringLiteral("label"));
     numbering_ = new QLineEdit(QStringLiteral("{h1}.{n}"));
+    numbering_->setObjectName(QStringLiteral("numbering"));
     kind_ = new QComboBox;
+    kind_->setObjectName(QStringLiteral("kind"));
     kind_->addItem(tr("Objek baru (gambar atau tabel)"), QStringLiteral("float"));
     kind_->addItem(tr("Gambar"), QStringLiteral("figure"));
     kind_->addItem(tr("Tabel"), QStringLiteral("table"));

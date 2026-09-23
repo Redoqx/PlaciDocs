@@ -67,6 +67,9 @@ private:
     void insertCitation();
     void insertPageBreak();
     void chooseStyle(int index);
+    void rememberRecent(const QString& path);
+    void rebuildRecentMenu();
+    void autosave();
     void showSyntaxHelp();
 
     QString docPath() const;  // path used for building (a temp file for untitled documents)
@@ -82,12 +85,13 @@ private:
     QListWidget* problems_ = nullptr;
     QComboBox* format_ = nullptr;
     QComboBox* styleBox_ = nullptr;
-    QMenu *tagMenu_ = nullptr, *sectionMenu_ = nullptr, *listMenu_ = nullptr, *refMenu_ = nullptr;
+    QMenu *tagMenu_ = nullptr, *sectionMenu_ = nullptr, *listMenu_ = nullptr, *refMenu_ = nullptr, *recentMenu_ = nullptr;
     QLabel* status_ = nullptr;
     QAction* follow_ = nullptr;
+    QAction* autosave_ = nullptr;
 
     BuildController build_;
-    QTimer analyzeTimer_, followTimer_;
+    QTimer analyzeTimer_, followTimer_, autosaveTimer_;
     QString path_;          // empty = untitled
     QString untitledPath_;
     bool loading_ = false;

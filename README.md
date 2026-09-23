@@ -47,7 +47,16 @@ cmake -S . -B build-qt -G Ninja -DCMAKE_BUILD_TYPE=Release `
       -DCMAKE_CXX_COMPILER=C:/Qt/Tools/mingw1310_64/bin/g++.exe
 cmake --build build-qt --target placidocs          # windeployqt menyalin DLL Qt ke build-qt/
 cmake --build build-qt --target texcache           # atau salin build/texcache ke build-qt/
+ctest --test-dir build-qt                          # test engine + test GUI (headless)
 ./build-qt/placidocs examples/skripsi/main.md
+```
+
+**Paket siap pakai.** Dari direktori build yang sama:
+
+```powershell
+cmake --install build-qt --prefix dist   # satu folder: kedua aplikasi, Tectonic,
+                                         # texcache/, styles/, dan runtime Qt
+cpack --config build-qt/CPackConfig.cmake -G ZIP
 ```
 
 **Offline.** `placi` dan `placidocs` mencari `texcache/` di sebelah executable, lalu
@@ -68,6 +77,9 @@ placi styles                                    # daftar style bawaan
 
 `placi.exe` adalah program terminal. Kalau di-double-click, jendelanya langsung tertutup.
 Untuk menulis dengan tampilan, gunakan `placidocs.exe`.
+
+Error dari LaTeX dilaporkan pada baris Markdown yang menyebabkannya, misalnya
+`main.md:10: error: LaTeX: Undefined control sequence`.
 
 ## Dialek Markdown PlaciDocs
 
@@ -162,6 +174,10 @@ Toolbar menyediakan:
 - **Halaman baru**;
 - **Daftar ▾** berisi daftar yang tersedia dan **Tambah Daftar…**;
 - pilihan Style dan Ekspor PDF.
+
+Menu **Berkas** menyimpan daftar dokumen terakhir dan punya **Simpan otomatis**
+(aktif secara bawaan, hanya untuk dokumen yang sudah pernah disimpan; dokumen
+"Tanpa judul" tidak pernah ditulis diam-diam).
 
 Untuk menelusuri masalah build di aplikasi, set variabel `PLACI_LOG=<berkas>`.
 

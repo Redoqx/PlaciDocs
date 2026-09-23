@@ -26,6 +26,7 @@
 #include <QStatusBar>
 #include <QTextBlock>
 #include <QTextBrowser>
+#include <QTime>
 #include <QToolBar>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -85,6 +86,9 @@ MainWindow::MainWindow() {
     followTimer_.setSingleShot(true);
     followTimer_.setInterval(250);
     connect(&followTimer_, &QTimer::timeout, this, &MainWindow::followCursor);
+    autosaveTimer_.setInterval(60000);
+    connect(&autosaveTimer_, &QTimer::timeout, this, &MainWindow::autosave);
+    autosaveTimer_.start();
 
     connect(&build_, &BuildController::started, this, &MainWindow::onBuildStarted);
     connect(&build_, &BuildController::finished, this, &MainWindow::onBuildFinished);
@@ -169,7 +173,15 @@ void MainWindow::buildMenus() {
     file->addSeparator();
     auto* actExport = file->addAction(tr("&Ekspor PDF…"), QKeySequence(tr("Ctrl+E")), this, &MainWindow::exportPdf);
     file->addSeparator();
+    recentMenu_ = file->addMenu(tr("Dokumen &terakhir"));
+    autosave_ = file->addAction(tr("Simpan &otomatis"));
+    autosave_->setCheckable(true);
+    autosave_->setChecked(QSettings().value(QStringLiteral("autosave"), true).toBool());
+    autosave_->setToolTip(tr("Menyimpan dokumen yang sudah pernah disimpan setiap menit."));
+    connect(autosave_, &QAction::toggled, this, [](bool on) { QSettings().setValue(QStringLiteral("autosave"), on); });
+    file->addSeparator();
     file->addAction(tr("&Keluar"), QKeySequence::Quit, this, &QWidget::close);
+    rebuildRecentMenu();
 
     // --- Format
     auto* fmt = menuBar()->addMenu(tr("&Format"));
@@ -319,8 +331,41 @@ bool MainWindow::save() {
         return false;
     }
     editor_->document()->setModified(false);
+    rememberRecent(path_);
     updateTitle();
     return true;
+}
+
+void MainWindow::rememberRecent(const QString& path) {
+    QSettings settings;
+    QStringList recent = settings.value(QStringLiteral("recentFiles")).toStringList();
+    recent.removeAll(path);
+    recent.prepend(path);
+    while (recent.size() > 8) recent.removeLast();
+    settings.setValue(QStringLiteral("recentFiles"), recent);
+    rebuildRecentMenu();
+}
+
+void MainWindow::rebuildRecentMenu() {
+    if (!recentMenu_) return;
+    recentMenu_->clear();
+    const QStringList recent = QSettings().value(QStringLiteral("recentFiles")).toStringList();
+    for (const QString& path : recent) {
+        if (!QFileInfo::exists(path)) continue;
+        recentMenu_->addAction(QFileInfo(path).fileName() + QStringLiteral("   —   ") + QFileInfo(path).absolutePath(),
+                               this, [this, path] {
+                                   if (maybeSave()) openFile(path);
+                               });
+    }
+    if (recentMenu_->isEmpty()) recentMenu_->addAction(tr("(belum ada)"))->setEnabled(false);
+}
+
+// Saves a document that already has a file, the way Word does; untitled
+// documents are left alone so nothing is written where the user did not ask.
+void MainWindow::autosave() {
+    if (!autosave_ || !autosave_->isChecked()) return;
+    if (path_.isEmpty() || !editor_->document()->isModified()) return;
+    if (save()) statusBar()->showMessage(tr("Disimpan otomatis %1").arg(QTime::currentTime().toString("HH:mm")), 4000);
 }
 
 bool MainWindow::saveAs() {
@@ -478,10 +523,13 @@ void MainWindow::onBuildFinished(const BuildReport& r) {
         if (here) item->setData(Qt::UserRole, p.line);
         (p.error ? errors : warnings)++;
     }
-    for (auto& e : r.latexErrors) {
-        new QListWidgetItem(style()->standardIcon(QStyle::SP_MessageBoxCritical), tr("LaTeX: ") + e, problems_);
-        ++errors;
-    }
+    // LaTeX errors already arrive as problems, mapped to Markdown lines; show the
+    // raw engine messages only when nothing was mapped.
+    if (!errors)
+        for (auto& e : r.latexErrors) {
+            new QListWidgetItem(style()->standardIcon(QStyle::SP_MessageBoxCritical), tr("LaTeX: ") + e, problems_);
+            ++errors;
+        }
 
     QString summary = r.ok ? tr("Selesai dalam %1 dtk").arg(r.millis / 1000.0, 0, 'f', 1) : tr("Gagal");
     if (errors) summary += tr(" · %1 error").arg(errors);

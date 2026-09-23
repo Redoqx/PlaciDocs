@@ -138,18 +138,19 @@ lists:
 - **Urutan**: 2A (engine) lalu langsung 2B (GUI).
 - Qt 6.8.3 LTS (MinGW 13.1), karena `aqtinstall` belum bisa membaca repositori Qt 6.11.
 
-## 5. Status dan sisa pekerjaan
+## 5. Status dan sisa pekerjaan (2026-09-23)
 Sudah selesai:
 - Tag judul (dengan pembatas yang bisa diganti dan escape), section berpasangan, `{halaman-baru}`.
 - Daftar dinamis (`newfloat`), rumus bercaption, template `pengesahan`, pustaka bertag.
 - Cache LaTeX dibundel (±50 MB, `--only-cached`), dengan fallback unduh sekali plus peringatan.
 - Aplikasi Qt: editor, kerangka, preview live yang mengikuti kursor, panel masalah,
-  toolbar Tag/Section/Daftar/Rujukan/Sisipkan, dan Tambah Daftar.
+  toolbar Tag/Section/Daftar/Rujukan/Sisipkan, Tambah Daftar, dokumen terakhir, simpan otomatis.
+- Error LaTeX dipetakan ke baris Markdown (peta baris `.tex` → `.md` dari emitter).
+- Test: 40 kasus engine + 11 kasus GUI (dialog dijalankan headless lewat `QT_QPA_PLATFORM=offscreen`).
+- Paket instalasi satu folder (`cmake --install`) dan ZIP lewat CPack.
 
 Belum dikerjakan:
-- SyncTeX: klik di PDF lalu lompat ke baris. Saat ini sinkronisasi hanya satu arah,
-  lewat bookmark per judul.
-- Error LaTeX belum dipetakan ke baris Markdown (diagnostik PlaciDocs sendiri sudah memakai nomor baris).
-- Dialog GUI (gambar, tabel, rumus, sitasi, Tambah Daftar) baru diuji lewat build, belum lewat klik.
-- Penyimpanan otomatis dan daftar berkas terakhir.
-- Installer yang membawa `texcache/`, `styles/`, Tectonic, dan DLL Qt dalam satu paket.
+- SyncTeX: klik di PDF lalu lompat ke baris. Saat ini sinkronisasi satu arah, lewat bookmark per judul.
+- Peringatan LaTeX (misalnya *overfull hbox*) belum ikut dipetakan; baru error yang dipetakan.
+- Installer berbasis NSIS/MSI (sekarang baru ZIP) dan penandatanganan biner.
+- Penyuntingan berkas style lewat antarmuka.
